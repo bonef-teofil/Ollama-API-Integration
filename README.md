@@ -1,4 +1,5 @@
-# Simple Ollama API integration - Chatbot and Tic tac toe game
+# Simple Ollama API integration
+## Chatbot and Tic Tac Toe game
 
 ### Usage
 
