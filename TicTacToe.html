@@ -110,6 +110,8 @@
             <div class="cell" data-index="7"></div>
             <div class="cell" data-index="8"></div>
         </div>
+        <button onclick="SystemPrompt()">Start</button>
+        <button onclick="ShowConversation()">Show Conversation</button>
     </div>
 
 
@@ -126,29 +128,12 @@
 
         let conversation = [{
             role: 'system',
-            content: `You are a Tic-Tac-Toe AI
-Board is 9 characters X O or numbers 0-8
-X is you O is opponent numbers are empty
-Example X0X2O4567
-Board layout
-012
-345
-678
-STRICT RULES
-ONLY respond with a single digit 0-8
-ONLY choose empty positions numbers
-NEVER place on X or O
-NEVER reuse a position
-INVALID MOVE LOSES THE GAME
-Analyze and pick best empty position
-Prioritize
-1 Win
-2 Block opponent
-3 Create win chances
-4 Center
-5 Corners
-6 Any open spot
-NO explanations NO extra text`
+            content: `
+You are an AI playing with O in Tic-Tac-Toe.
+Board X and O means taken, 0-8 means available.
+Choose ONLY from available numbers
+Response with one digit number. Do not include any other text,
+`
         }];
 
         let currentPlayer = 'X';
@@ -161,6 +146,39 @@ NO explanations NO extra text`
             [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
             [0, 4, 8], [2, 4, 6] // Diagonals
         ];
+
+        function ShowConversation() {
+            console.log("----------------------");
+            conversation.forEach((message) => {
+                console.log(message.role + ": " + message.content);
+            });
+            console.log("----------------------");
+        }
+
+        async function SystemPrompt() {
+            const response = await fetch('http://localhost:11434/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: "llama3",
+                    messages: conversation,
+                    stream: false
+                }),
+            });
+
+            if (!response.ok) {
+                alert("Error: " + response.status);
+                throw new Error(`HTTP error! status: ${response.status}`);
+                endGame("Error: " + response.status);
+                return;
+            }
+
+            const data = await response.json();
+            const ollamaMessage = data.message.content;
+            console.log("Ollama response: " + ollamaMessage);
+        }
 
         function handleCellClick(e) {
             const cell = e.target;
@@ -184,22 +202,13 @@ NO explanations NO extra text`
                     gameBoardNumbers += i;
                 }
             }
-            console.log("Request board: " + gameBoardNumbers);
 
             conversation.push({
-                role: 'system',
-                content: `You are playing Tic-Tac-Toe
-Current board: ${gameBoardNumbers}
-X is opponent O is you numbers are empty
-Example input: X0X2O4567
-You must return the updated board after your move
-ONLY change ONE empty position to O
-DO NOT modify X positions
-DO NOT modify existing O positions
-Choose the best move to win or block opponent
-Respond ONLY with one free digit 0-8`
+                role: 'user',
+                content: `The current board is: ${gameBoardNumbers}. DO NOT choose a taken number.`
             });
 
+            console.log("Request board: " + gameBoardNumbers);
 
             const response = await fetch('http://localhost:11434/api/chat', {
                 method: 'POST',
@@ -223,9 +232,9 @@ Respond ONLY with one free digit 0-8`
             const data = await response.json();
             const ollamaMessage = data.message.content;
             console.log("Ollama response: " + ollamaMessage);
-            // console.log("Game bord before: " + gameBoard);
+            console.log("Game bord before: " + gameBoard);
             gameBoard[parseInt(ollamaMessage)] = "O";
-            // console.log("Game bord after: " + gameBoard + "\n");
+            console.log("Game bord after: " + gameBoard + "\n");
             cells[parseInt(ollamaMessage)].textContent = "O";
             conversation.push({
                 role: 'assistant',
