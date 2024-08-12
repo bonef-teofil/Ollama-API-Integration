@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Tic-Tac-Toe</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        .score-board {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .status {
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            background-color: #333;
+            padding: 5px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border-radius: 5px;
+        }
+
+        .cell:hover {
+            background-color: #e0e0e0;
+        }
+
+        .button-container {
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 0 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .winner-panel {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <div id="status-panel">
+            <div class="score-board">
+                Player X: <span id="score-x">0</span> | Player O: <span id="score-o">0</span>
+            </div>
+            <div class="status" id="status">Player X's turn</div>
+        </div>
+        <div class="winner-panel" id="winner-panel" style="display: none;">
+            <h2 id="winner-message"></h2>
+            <button id="ok-btn">OK</button>
+        </div>
+        <div class="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+    </div>
+
+
+    <script>
+        const board = document.querySelector('.board');
+        const cells = document.querySelectorAll('.cell');
+        const status = document.getElementById('status');
+        const scoreX = document.getElementById('score-x');
+        const scoreO = document.getElementById('score-o');
+        const statusPanel = document.getElementById('status-panel');
+        const winnerPanel = document.getElementById('winner-panel');
+        const winnerMessage = document.getElementById('winner-message');
+        const okBtn = document.getElementById('ok-btn');
+
+        let conversation = [{
+            role: 'system',
+            content: `You are a Tic-Tac-Toe AI
+Board is 9 characters X O or numbers 0-8
+X is you O is opponent numbers are empty
+Example X0X2O4567
+Board layout
+012
+345
+678
+STRICT RULES
+ONLY respond with a single digit 0-8
+ONLY choose empty positions numbers
+NEVER place on X or O
+NEVER reuse a position
+INVALID MOVE LOSES THE GAME
+Analyze and pick best empty position
+Prioritize
+1 Win
+2 Block opponent
+3 Create win chances
+4 Center
+5 Corners
+6 Any open spot
+NO explanations NO extra text`
+        }];
+
+        let currentPlayer = 'X';
+        let gameBoard = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        let scores = { X: 0, O: 0 };
+
+        const winningCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6] // Diagonals
+        ];
+
+        function handleCellClick(e) {
+            const cell = e.target;
+            const index = parseInt(cell.getAttribute('data-index'));
+
+            if (currentPlayer === "O" || gameBoard[index] !== '' || !gameActive) return;
+
+            gameBoard[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            checkMove();
+            if (gameActive) askOllama();
+        }
+
+        async function askOllama() {
+            var gameBoardNumbers = "";
+            for (var i = 0; i < 9; ++i) {
+                if (gameBoard[i] != "") {
+                    gameBoardNumbers += gameBoard[i];
+                }
+                else {
+                    gameBoardNumbers += i;
+                }
+            }
+            console.log("Request board: " + gameBoardNumbers);
+
+            conversation.push({
+                role: 'system',
+                content: `You are playing Tic-Tac-Toe
+Current board: ${gameBoardNumbers}
+X is opponent O is you numbers are empty
+Example input: X0X2O4567
+You must return the updated board after your move
+ONLY change ONE empty position to O
+DO NOT modify X positions
+DO NOT modify existing O positions
+Choose the best move to win or block opponent
+Respond ONLY with one free digit 0-8`
+            });
+
+
+            const response = await fetch('http://localhost:11434/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: "llama3",
+                    messages: conversation,
+                    stream: false
+                }),
+            });
+
+            if (!response.ok) {
+                alert("Error: " + response.status);
+                throw new Error(`HTTP error! status: ${response.status}`);
+                endGame("Error: " + response.status);
+                return;
+            }
+
+            const data = await response.json();
+            const ollamaMessage = data.message.content;
+            console.log("Ollama response: " + ollamaMessage);
+            // console.log("Game bord before: " + gameBoard);
+            gameBoard[parseInt(ollamaMessage)] = "O";
+            // console.log("Game bord after: " + gameBoard + "\n");
+            cells[parseInt(ollamaMessage)].textContent = "O";
+            conversation.push({
+                role: 'assistant',
+                content: ollamaMessage
+            });
+            checkMove();
+        }
+
+        function checkMove() {
+            if (checkWin()) {
+                endGame(`Player ${currentPlayer} wins!`);
+                scores[currentPlayer]++;
+                updateScoreBoard();
+                return;
+            }
+
+            if (checkDraw()) {
+                endGame("It's a draw!");
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            updateStatus();
+        }
+
+        function checkWin() {
+            return winningCombinations.some(combination => {
+                return combination.every(index => {
+                    return gameBoard[index] === currentPlayer;
+                });
+            });
+        }
+
+        function checkDraw() {
+            return gameBoard.every(cell => cell !== '');
+        }
+
+        function updateStatus() {
+            status.textContent = currentPlayer === 'X' ? "Your turn" : "Computer's turn, thinking...";
+            status.style.color = currentPlayer === 'X' ? 'blue' : 'red';
+        }
+
+        function updateScoreBoard() {
+            scoreX.textContent = scores.X;
+            scoreO.textContent = scores.O;
+        }
+
+        function endGame(message) {
+            gameActive = false;
+            winnerMessage.textContent = message;
+            winnerPanel.style.display = 'flex';
+            statusPanel.style.display = 'none';
+            conversation.push({
+                role: 'system',
+                content: message
+            });
+        }
+
+        function resetGame() {
+            currentPlayer = 'X';
+            gameBoard = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            cells.forEach(cell => {
+                cell.textContent = '';
+            });
+            winnerPanel.style.display = 'none';
+            statusPanel.style.display = 'block';
+            updateStatus();
+        }
+
+        cells.forEach(cell => {
+            cell.addEventListener('click', handleCellClick);
+        });
+
+        okBtn.addEventListener('click', resetGame);
+
+        updateStatus();
+        updateScoreBoard();
+    </script>
+</body>
+
+</html>

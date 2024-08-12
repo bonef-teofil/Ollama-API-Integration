@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olama 3.0 Integration</title>
+    <style>
+        #container {
+            max-width: 800px;
+            width: 1000px;
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #inputText {
+            height: 100px;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        #resultText {
+            height: 200px;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>Olama 3.0 API Integration</h1>
+        <textarea id="inputText" placeholder="Enter text here..."></textarea>
+        <button onclick="fetchData()">Submit</button>
+        <textarea id="resultText" readonly placeholder="Result will be displayed here..."></textarea>
+    </div>
+
+    <script>
+        async function fetchData() {
+            const inputText = document.getElementById('inputText').value;
+            if (inputText.trim() === '') return;
+
+            try {
+                document.getElementById('resultText').value = "Thinking...";
+                document.getElementById('inputText').disabled = true;
+                const response = await fetch('http://localhost:11434/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: "llama3", messages: [
+                            { role: 'user', content: inputText }
+                        ], stream: false
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+                document.getElementById('resultText').value = data.message.content;
+                document.getElementById('inputText').disabled = false;
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        // send with enter key
+        document.getElementById('inputText').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                fetchData();
+            }
+        });
+    </script>
+</body>
+
+</html>
