@@ -18,6 +18,11 @@
 
         .game-container {
             text-align: center;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
         .score-board {
@@ -33,6 +38,7 @@
 
         .board {
             display: grid;
+            width: 310px;
             grid-template-columns: repeat(3, 100px);
             grid-gap: 5px;
             background-color: #333;
@@ -110,210 +116,11 @@
             <div class="cell" data-index="7"></div>
             <div class="cell" data-index="8"></div>
         </div>
-        <button onclick="SystemPrompt()">Start</button>
         <button onclick="ShowConversation()">Show Conversation</button>
     </div>
 
-
-    <script>
-        const board = document.querySelector('.board');
-        const cells = document.querySelectorAll('.cell');
-        const status = document.getElementById('status');
-        const scoreX = document.getElementById('score-x');
-        const scoreO = document.getElementById('score-o');
-        const statusPanel = document.getElementById('status-panel');
-        const winnerPanel = document.getElementById('winner-panel');
-        const winnerMessage = document.getElementById('winner-message');
-        const okBtn = document.getElementById('ok-btn');
-
-        let conversation = [{
-            role: 'system',
-            content: `
-You are an AI playing with O in Tic-Tac-Toe.
-Board X and O means taken, 0-8 means available.
-Choose ONLY from available numbers
-Response with one digit number. Do not include any other text,
-`
-        }];
-
-        let currentPlayer = 'X';
-        let gameBoard = ['', '', '', '', '', '', '', '', ''];
-        let gameActive = true;
-        let scores = { X: 0, O: 0 };
-
-        const winningCombinations = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-            [0, 4, 8], [2, 4, 6] // Diagonals
-        ];
-
-        function ShowConversation() {
-            console.log("----------------------");
-            conversation.forEach((message) => {
-                console.log(message.role + ": " + message.content);
-            });
-            console.log("----------------------");
-        }
-
-        async function SystemPrompt() {
-            const response = await fetch('http://localhost:11434/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: "llama3",
-                    messages: conversation,
-                    stream: false
-                }),
-            });
-
-            if (!response.ok) {
-                alert("Error: " + response.status);
-                throw new Error(`HTTP error! status: ${response.status}`);
-                endGame("Error: " + response.status);
-                return;
-            }
-
-            const data = await response.json();
-            const ollamaMessage = data.message.content;
-            console.log("Ollama response: " + ollamaMessage);
-        }
-
-        function handleCellClick(e) {
-            const cell = e.target;
-            const index = parseInt(cell.getAttribute('data-index'));
-
-            if (currentPlayer === "O" || gameBoard[index] !== '' || !gameActive) return;
-
-            gameBoard[index] = currentPlayer;
-            cell.textContent = currentPlayer;
-            checkMove();
-            if (gameActive) askOllama();
-        }
-
-        async function askOllama() {
-            var gameBoardNumbers = "";
-            for (var i = 0; i < 9; ++i) {
-                if (gameBoard[i] != "") {
-                    gameBoardNumbers += gameBoard[i];
-                }
-                else {
-                    gameBoardNumbers += i;
-                }
-            }
-
-            conversation.push({
-                role: 'user',
-                content: `The current board is: ${gameBoardNumbers}. DO NOT choose a taken number.`
-            });
-
-            console.log("Request board: " + gameBoardNumbers);
-
-            const response = await fetch('http://localhost:11434/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: "llama3",
-                    messages: conversation,
-                    stream: false
-                }),
-            });
-
-            if (!response.ok) {
-                alert("Error: " + response.status);
-                throw new Error(`HTTP error! status: ${response.status}`);
-                endGame("Error: " + response.status);
-                return;
-            }
-
-            const data = await response.json();
-            const ollamaMessage = data.message.content;
-            console.log("Ollama response: " + ollamaMessage);
-            console.log("Game bord before: " + gameBoard);
-            gameBoard[parseInt(ollamaMessage)] = "O";
-            console.log("Game bord after: " + gameBoard + "\n");
-            cells[parseInt(ollamaMessage)].textContent = "O";
-            conversation.push({
-                role: 'assistant',
-                content: ollamaMessage
-            });
-            checkMove();
-        }
-
-        function checkMove() {
-            if (checkWin()) {
-                endGame(`Player ${currentPlayer} wins!`);
-                scores[currentPlayer]++;
-                updateScoreBoard();
-                return;
-            }
-
-            if (checkDraw()) {
-                endGame("It's a draw!");
-                return;
-            }
-
-            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-            updateStatus();
-        }
-
-        function checkWin() {
-            return winningCombinations.some(combination => {
-                return combination.every(index => {
-                    return gameBoard[index] === currentPlayer;
-                });
-            });
-        }
-
-        function checkDraw() {
-            return gameBoard.every(cell => cell !== '');
-        }
-
-        function updateStatus() {
-            status.textContent = currentPlayer === 'X' ? "Your turn" : "Computer's turn, thinking...";
-            status.style.color = currentPlayer === 'X' ? 'blue' : 'red';
-        }
-
-        function updateScoreBoard() {
-            scoreX.textContent = scores.X;
-            scoreO.textContent = scores.O;
-        }
-
-        function endGame(message) {
-            gameActive = false;
-            winnerMessage.textContent = message;
-            winnerPanel.style.display = 'flex';
-            statusPanel.style.display = 'none';
-            conversation.push({
-                role: 'system',
-                content: message
-            });
-        }
-
-        function resetGame() {
-            currentPlayer = 'X';
-            gameBoard = ['', '', '', '', '', '', '', '', ''];
-            gameActive = true;
-            cells.forEach(cell => {
-                cell.textContent = '';
-            });
-            winnerPanel.style.display = 'none';
-            statusPanel.style.display = 'block';
-            updateStatus();
-        }
-
-        cells.forEach(cell => {
-            cell.addEventListener('click', handleCellClick);
-        });
-
-        okBtn.addEventListener('click', resetGame);
-
-        updateStatus();
-        updateScoreBoard();
-    </script>
+    <script src="Script.js"></script>
+    <script src="OllamaTurn.js"></script>
 </body>
 
 </html>
