@@ -66,13 +66,16 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: "llama3", messages: [
-                            { role: 'user', content: inputText }
-                        ], stream: false
+                        model: "llama3",
+                        messages: [{ role: 'user', content: inputText }],
+                        stream: false
                     })
                 });
 
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                if (!response.ok) {
+                    document.getElementById('resultText').value = "Error: status " + response.status;
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
                 const data = await response.json();
                 document.getElementById('resultText').value = data.message.content;

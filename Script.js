@@ -1,5 +1,4 @@
 
-
 const board = document.querySelector('.board');
 const cells = document.querySelectorAll('.cell');
 const statusText = document.getElementById('status');
@@ -13,6 +12,8 @@ const okBtn = document.getElementById('ok-btn');
 let currentPlayer = 'X';
 let gameActive = true;
 let scores = { X: 0, O: 0 };
+
+let ollamaModel = "llama3";
 
 const winningCombinations = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -28,11 +29,11 @@ function handleCellClick(e) {
     if (currentPlayer === "O" || cells[index].textContent !== '' || !gameActive) return;
 
     cell.textContent = currentPlayer;
-    checkMove();
-    if (gameActive) askOllama();
+    checkWinner();
+    if (gameActive) ollamaTurn();
 }
 
-function checkMove() {
+function checkWinner() {
     if (checkWin()) {
         endGame(`Player ${currentPlayer} wins!`);
         scores[currentPlayer]++;
@@ -58,10 +59,6 @@ function checkWin() {
 }
 
 function checkDraw() {
-    // cells.forEach(cell => {
-    //     if (cell.textContent == '') return false;
-    // });
-    // return true;
     return [...cells].every(cell => cell.textContent !== '');
 }
 
@@ -79,7 +76,7 @@ function endGame(message) {
     gameActive = false;
     conversation = [{
         role: 'assistant',
-        content: systemPrompt,
+        content: ollamaSystemPrompt,
     }];
     winnerMessage.textContent = message;
     winnerPanel.style.display = 'flex';
@@ -103,6 +100,3 @@ cells.forEach(cell => {
 });
 
 okBtn.addEventListener('click', resetGame);
-
-updateStatus();
-updateScoreBoard();
