@@ -1,14 +1,39 @@
+const ollamaSelectorPanel = document.getElementsByClassName("ollama-selector")[0];
+const gameBoardPanel = document.getElementsByClassName("game-container")[0];
+const ollamaSelectorInput = document.getElementById("ollama-selector-input");
 
 const ollamaSystemPrompt = `You are an AI playing with O in Tic-Tac-Toe.
-Board X and O means taken, 0-8 means available.
+Board X and O means taken.
+0-8 means available.
 Choose ONLY from available numbers
-Response with one digit number. Do not include any other text.`;
+Response with one digit number. DO NOT INCLUDE ANY ANOTHER TEXT.`;
+
 
 let conversation = [{
     role: 'system',
     content: ollamaSystemPrompt,
 }];
 let gameBoardNumbers;
+
+let ollamaModel = "llama3.2";
+
+
+function setLlamaModel() {
+    ollamaSelectorPanel.style.display = "none";
+    gameBoardPanel.style.display = "flex"
+    ollamaModel = ollamaSelectorInput.value;
+}
+
+function gameBoardToString() {
+    let str = "";
+    for (let i = 0; i < 9; ++i) {
+        if (i % 3 == 0) {
+            str += "\n"
+        }
+        str += gameBoardNumbers[i] + " ";
+    }
+    return str;
+}
 
 function ollamaTurn() {
     if (!gameActive) return;
@@ -17,14 +42,14 @@ function ollamaTurn() {
 
     conversation.push({
         role: 'user',
-        content: `The current board is: ${gameBoardNumbers}. DO NOT choose a taken number.`
+        content: `The current board is:${gameBoardToString()}\nRESPOND ONLY WITH ONE DIGIT PRESENT IN ${gameBoardToString()}`
     });
     ollamaRequest();
 }
 
 async function ollamaRequest() {
 
-    console.log("Request board: " + gameBoardNumbers);
+    console.log("Request board: " + gameBoardToString());
 
     const response = await fetch('http://localhost:11434/api/chat', {
         method: 'POST',
@@ -55,20 +80,18 @@ function checkOllamaResponse(response) {
     });
     if (isNaN(ollamaMove)) {
         console.log("Invalid response from Ollama: " + response);
-        // alert("Invalid response from Ollama: " + response);
         conversation.push({
             role: 'user',
-            content: `Error: Non-numeric response. Current board: ${gameBoardNumbers}. DO NOT RESPOND AGAIN WITH ${response}`
+            content: `Error: Non-numeric response. Current board: ${gameBoardToString()}\nRESPOND ONLY WITH ONE DIGIT PRESENT IN ${gameBoardToString()}`
         });
         ollamaRequest();
         return;
     }
     if (ollamaMove < 0 || ollamaMove > 8 || cells[ollamaMove].textContent !== '') {
         console.log("Invalid position from Ollama: " + response);
-        // alert("Invalid position from Ollama: " + response);
         conversation.push({
             role: 'user',
-            content: `Error: Invalid or occupied position. Current board: ${gameBoardNumbers}. DO NOT RESPOND AGAIN WITH ${response}`
+            content: `Error: Invalid or occupied position. Current board: ${gameBoardToString()}\nRESPOND ONLY WITH ONE DIGIT PRESENT IN ${gameBoardToString()}`
         });
         ollamaRequest();
         return;
@@ -80,7 +103,7 @@ function checkOllamaResponse(response) {
 
 
 function ShowConversation() {
-    console.log("----------------------");
+    console.log("\n----------------------");
     conversation.forEach((message) => {
         console.log(message.role + ": " + message.content);
     });

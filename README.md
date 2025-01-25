@@ -1,7 +1,19 @@
 # Simple Ollama API integration - Chatbot and Tic Tac Toe game
 
-### Usage
+This project demonstrates a basic **Ollama API** integration, with two functionalities:
+- A **Chatbot** powered by ollama.
+- A **Tic Tac Toe** game.
 
-- Download and run [Ollama](https://ollama.com/)
-- Update the ollama model in the [OlamaChatBot.html](https://github.com/bonef-teofil/Ollama-API-Integration/blob/main/OlamaChatBot.html) and [Script.js](https://github.com/bonef-teofil/Ollama-API-Integration/blob/main/Script.js) files
-- Open file in VsCode with [Live server extension](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
+## Getting Started
+
+### Requirement
+- [**Ollama**](https://ollama.com/) installed and running any version.
+- [**Visual Studio Code**](https://code.visualstudio.com/) preferred editor (*Optional).
+-  [**Live server extension**](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) installed in vs code (*Optional).
+
+
+### Running
+1. Open the ***chatbot*** or the ***tic tac toe*** file with live server
+2. Enter the ollama version running
+3. Enjoy
+

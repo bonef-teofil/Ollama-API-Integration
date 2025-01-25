@@ -13,8 +13,6 @@ let currentPlayer = 'X';
 let gameActive = true;
 let scores = { X: 0, O: 0 };
 
-let ollamaModel = "llama3";
-
 const winningCombinations = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
     [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns

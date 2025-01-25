@@ -6,15 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Olama 3.0 Integration</title>
     <style>
-        #container {
-            max-width: 800px;
-            width: 1000px;
-            margin: 0 auto;
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
+            width: calc(100% - 100px);
+            min-width: 300px;
+            display: none;
         }
 
         #inputText {
@@ -43,31 +53,64 @@
             color: #fff;
             cursor: pointer;
         }
+
+        .ollama-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #ollama-selector-input {
+            font-family: 'Courier', monospace;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
 <body>
-    <div id="container">
-        <h1>Olama 3.0 API Integration</h1>
+    <div class="ollama-selector">
+        <h4>Enter ollama model:</h4>
+        <input type="text" id="ollama-selector-input" value="llama3.2">
+        <button onclick="setLlamaModel()">Start</button>
+    </div>
+
+    <div class="container">
+        <h1>Olama API Integration</h1>
         <textarea id="inputText" placeholder="Enter text here..."></textarea>
         <button onclick="fetchData()">Submit</button>
         <textarea id="resultText" readonly placeholder="Result will be displayed here..."></textarea>
     </div>
 
     <script>
+        let ollamaModel = "llama3.2";
+        const inputText = document.getElementById('inputText');
+        const resultText = document.getElementById('resultText');
+
+        function setLlamaModel() {
+            document.getElementsByClassName("ollama-selector")[0].style.display = "none";
+            document.getElementsByClassName("container")[0].style.display = "flex"
+            ollamaModel = document.getElementById("ollama-selector-input").value;
+        }
+
         async function fetchData() {
-            const inputText = document.getElementById('inputText').value;
-            if (inputText.trim() === '') return;
+            if (inputText.value == "") return;
 
             try {
-                document.getElementById('resultText').value = "Thinking...";
-                document.getElementById('inputText').disabled = true;
+                inputText.disabled = true;
+                inputText.placeholder = inputText.value;
+                inputText.value = "";
+                resultText.value = "Thinking...";
                 const response = await fetch('http://localhost:11434/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: "llama3",
-                        messages: [{ role: 'user', content: inputText }],
+                        model: ollamaModel,
+                        messages: [{ role: 'user', content: inputText.placeholder }],
                         stream: false
                     })
                 });
@@ -78,8 +121,13 @@
                 }
 
                 const data = await response.json();
-                document.getElementById('resultText').value = data.message.content;
-                document.getElementById('inputText').disabled = false;
+                inputText.disabled = false;
+                resultText.value = data.message.content;
+
+                // Așteaptă câteva milisecunde pentru a permite DOM-ului să se actualizeze
+                setTimeout(() => {
+                    resultText.value = data.message.content;
+                }, 10);
             } catch (error) {
                 console.error("Error:", error);
             }

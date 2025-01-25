@@ -19,7 +19,7 @@
         .game-container {
             text-align: center;
             margin: 0 auto;
-            display: flex;
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -90,14 +90,36 @@
             justify-content: center;
             align-items: center;
         }
+
+        .ollama-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #ollama-selector-input {
+            font-family: 'Courier', monospace;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
 <body>
+    <div class="ollama-selector">
+        <h4>Enter ollama model:</h4>
+        <input type="text" id="ollama-selector-input" value="llama3.2">
+        <button onclick="setLlamaModel()">Start</button>
+    </div>
+
     <div class="game-container">
         <div id="status-panel">
             <div class="score-board">
-                Player X: <span id="score-x">0</span> | Player O: <span id="score-o">0</span>
+                <span id="score-x">0</span> : <span id="score-o">0</span>
             </div>
             <div class="status" id="status">Player X's turn</div>
         </div>
@@ -116,7 +138,7 @@
             <div class="cell" data-index="7"></div>
             <div class="cell" data-index="8"></div>
         </div>
-        <button onclick="ShowConversation()">Show Conversation</button>
+        <button onclick="ShowConversation()">Show conversation in terminal</button>
     </div>
 
     <script src="Script.js"></script>
