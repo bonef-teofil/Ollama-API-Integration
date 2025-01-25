@@ -50,25 +50,29 @@ function ollamaTurn() {
 async function ollamaRequest() {
 
     console.log("Request board: " + gameBoardToString());
+    try {
+        const response = await fetch('http://localhost:11434/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: ollamaModel,
+                messages: conversation,
+                stream: false
+            }),
+        });
 
-    const response = await fetch('http://localhost:11434/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            model: ollamaModel,
-            messages: conversation,
-            stream: false
-        }),
-    });
+        if (!response.ok) {
+            throw new Error(response.status);
+        }
 
-    if (!response.ok) {
-        endGame("Error: " + response.status);
-        alert("Error: " + response.status);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        checkOllamaResponse(data.message.content);
     }
-
-    const data = await response.json();
-    checkOllamaResponse(data.message.content);
+    catch (error) {
+        endGame("Error: " + error);
+        alert("Error: " + error);
+        console.error("Error:", error);
+    }
 }
 
 function checkOllamaResponse(response) {

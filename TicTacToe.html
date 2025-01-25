@@ -16,6 +16,22 @@
             font-family: Arial, sans-serif;
         }
 
+        .ollama-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #ollama-selector-input {
+            font-family: 'Courier', monospace;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
         .game-container {
             text-align: center;
             margin: 0 auto;
@@ -25,15 +41,19 @@
             align-items: center;
         }
 
-        .score-board {
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-
-        .status {
-            margin-bottom: 10px;
+        #status-panel {
+            height: 50px;
             font-size: 18px;
             font-weight: bold;
+        }
+
+        #winner-panel {
+            height: 50px;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            display: none;
+            gap: 20px;
         }
 
         .board {
@@ -83,29 +103,6 @@
         button:hover {
             background-color: #45a049;
         }
-
-        .winner-panel {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .ollama-selector {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #ollama-selector-input {
-            font-family: 'Courier', monospace;
-            font-size: 18px;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 
@@ -118,12 +115,10 @@
 
     <div class="game-container">
         <div id="status-panel">
-            <div class="score-board">
-                <span id="score-x">0</span> : <span id="score-o">0</span>
-            </div>
-            <div class="status" id="status">Player X's turn</div>
+            <span id="score-x">0</span> : <span id="score-o">0</span>
+            <div id="status" style="color: blue;">Your turn</div>
         </div>
-        <div class="winner-panel" id="winner-panel" style="display: none;">
+        <div id="winner-panel">
             <h2 id="winner-message"></h2>
             <button id="ok-btn">OK</button>
         </div>

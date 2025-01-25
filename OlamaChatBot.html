@@ -16,6 +16,22 @@
             font-family: Arial, sans-serif;
         }
 
+        .ollama-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #ollama-selector-input {
+            font-family: 'Courier', monospace;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
         .container {
             font-family: Arial, sans-serif;
             display: flex;
@@ -52,22 +68,6 @@
             background-color: #007bff;
             color: #fff;
             cursor: pointer;
-        }
-
-        .ollama-selector {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #ollama-selector-input {
-            font-family: 'Courier', monospace;
-            font-size: 18px;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -115,20 +115,15 @@
                     })
                 });
 
-                if (!response.ok) {
-                    document.getElementById('resultText').value = "Error: status " + response.status;
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok)
+                    throw new Error(response.status);
 
                 const data = await response.json();
                 inputText.disabled = false;
                 resultText.value = data.message.content;
 
-                // Așteaptă câteva milisecunde pentru a permite DOM-ului să se actualizeze
-                setTimeout(() => {
-                    resultText.value = data.message.content;
-                }, 10);
             } catch (error) {
+                resultText.value = "Error: " + error;
                 console.error("Error:", error);
             }
         }
